@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import type { LoginInput, SignupInput } from "../types/user.types.js";
+import type { ForgotPasswordInput, LoginInput, SignupInput } from "../types/user.types.js";
 import User from "../models/User.js";
 import { generateToken } from "../lib/jwt.js";
 import { sendPasswordResetEmail } from "../services/email.service.js";
@@ -156,12 +156,13 @@ export const logout = async (_req: Request, res: Response): Promise<void> => {
 
 // POST /api/auth/forgot-password
 export const forgotPassword = async (
-  req: Request,
+  req: Request<{}, {}, ForgotPasswordInput>,
   res: Response,
 ): Promise<void> => {
   try {
     const { email } = req.body;
 
+    // 1. Validate email exists
     if (!email) {
       res.status(400).json({
         message: "Email is required.",
@@ -170,24 +171,40 @@ export const forgotPassword = async (
       return;
     }
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    }).select("+passwordResetToken +passwordResetExpires");
+    // 2. Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
 
-    // Prevent email enumeration
-    if (!user) {
-      res.status(200).json({
-        message:
-          "If an account with that email exists, a password reset link has been sent.",
+    // 3. Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+      res.status(400).json({
+        message: "Please provide a valid email address.",
       });
 
       return;
     }
 
-    // Generate raw token
+    // 4. Find user
+    const user = await User.findOne({
+      email: normalizedEmail,
+    }).select("+passwordResetToken +passwordResetExpires");
+
+    // Generic response to prevent email enumeration
+    if (!user) {
+      console.log(user);
+      res.status(200).json({
+        message:
+          "The email address is not registered.",
+      });
+
+      return;
+    }
+
+    // 5. Generate secure token
     const resetToken = crypto.randomBytes(32).toString("hex");
 
-    // Hash token before storing it
+    // 6. Store only the hashed token
     const hashedResetToken = crypto
       .createHash("sha256")
       .update(resetToken)
@@ -195,7 +212,7 @@ export const forgotPassword = async (
 
     user.passwordResetToken = hashedResetToken;
 
-    // 1 hour expiration
+    // Token expires in 1 hour
     user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
 
     await user.save();
@@ -210,7 +227,7 @@ export const forgotPassword = async (
         resetUrl,
       });
     } catch (emailError) {
-      // Remove token if email failed
+      // Remove reset token if email failed
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
 
@@ -219,15 +236,16 @@ export const forgotPassword = async (
       console.error("Failed to send password reset email:", emailError);
 
       res.status(500).json({
-        message: "Failed to send password reset email. Please try again.",
+        message: "Unable to send password reset email. Please try again later.",
       });
 
       return;
     }
 
+    // Same generic response
     res.status(200).json({
       message:
-        "If an account with that email exists, a password reset link has been sent.",
+        "If an account with that email exists, a password reset link will be sent.",
     });
   } catch (error) {
     console.error("Forgot password error:", error);

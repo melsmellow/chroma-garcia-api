@@ -26,3 +26,7 @@ export interface JwtPayload {
   userId: string;
   role: UserRole;
 }
+
+export interface ForgotPasswordInput {
+  email: string;
+}
