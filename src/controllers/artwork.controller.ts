@@ -8,14 +8,12 @@ import { uploadImage } from "../utils/uploadImage.js";
 // GET /api/artworks
 export const getArtworks = async (
   _req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const artworks = await ArtworkModel.find()
-      .populate("artist")
-      .sort({
-        createdAt: -1,
-      });
+    const artworks = await ArtworkModel.find().populate("artist").sort({
+      createdAt: -1,
+    });
 
     res.status(200).json({
       artworks,
@@ -32,7 +30,7 @@ export const getArtworks = async (
 // GET /api/artworks/:slug
 export const getArtworkBySlug = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const artwork = await ArtworkModel.findOne({
@@ -62,7 +60,7 @@ export const getArtworkBySlug = async (
 // POST /api/admin/artworks
 export const createArtwork = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -179,7 +177,7 @@ export const createArtwork = async (
 // PATCH /api/admin/artworks/:id
 export const updateArtwork = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const updates: Partial<Artwork> = {};
@@ -247,7 +245,7 @@ export const updateArtwork = async (
       {
         new: true,
         runValidators: true,
-      }
+      },
     ).populate("artist");
 
     if (!artwork) {
@@ -274,12 +272,10 @@ export const updateArtwork = async (
 // DELETE /api/admin/artworks/:id
 export const deleteArtwork = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const artwork = await ArtworkModel.findByIdAndDelete(
-      req.params.id
-    );
+    const artwork = await ArtworkModel.findByIdAndDelete(req.params.id);
 
     if (!artwork) {
       res.status(404).json({
@@ -304,7 +300,7 @@ export const deleteArtwork = async (
 // POST /api/artworks/:slug/like
 export const likeArtwork = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const artwork = await ArtworkModel.findOneAndUpdate(
@@ -318,7 +314,7 @@ export const likeArtwork = async (
       },
       {
         new: true,
-      }
+      },
     );
 
     if (!artwork) {
@@ -345,12 +341,15 @@ export const likeArtwork = async (
 // GET /api/artists/:slug/artworks
 export const getArtworksByArtistSlug = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const artist = await ArtistModel.findOne({
-      slug: req.params.slug,
-    });
+    const { slug } = req.params;
+
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+
+    const artist = await ArtistModel.findOne({ slug });
 
     if (!artist) {
       res.status(404).json({
@@ -360,17 +359,36 @@ export const getArtworksByArtistSlug = async (
       return;
     }
 
-    const artworks = await ArtworkModel.find({
-      artist: artist._id,
-    })
-      .populate("artist")
-      .sort({
-        createdAt: -1,
-      });
+    const skip = (page - 1) * limit;
+
+    const [artworks, total] = await Promise.all([
+      ArtworkModel.find({
+        artist: artist._id,
+      })
+        .populate("artist")
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limit),
+      ArtworkModel.countDocuments({
+        artist: artist._id,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
       artist,
       artworks,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Get artworks by artist error:", error);

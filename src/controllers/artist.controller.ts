@@ -5,16 +5,39 @@ import { uploadImage } from "../utils/uploadImage.js";
 
 // GET /api/artists
 export const getArtists = async (
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> => {
   try {
-    const artists = await ArtistModel.find().sort({
-      name: 1,
-    });
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
+    const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
+
+    const skip = (page - 1) * limit;
+
+    const [artists, total] = await Promise.all([
+      ArtistModel.find()
+        .sort({
+          name: 1,
+        })
+        .skip(skip)
+        .limit(limit),
+
+      ArtistModel.countDocuments(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
       artists,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Get artists error:", error);
