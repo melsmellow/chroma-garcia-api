@@ -104,7 +104,21 @@ export const login = async (
       return;
     }
 
-    res.status(200).json({
+    const token = generateToken({
+      userId: user._id.toString(),
+      role: user.role,
+    });
+
+    const response: {
+      message: string;
+      user: {
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+      };
+      token?: string;
+    } = {
       message: "Login successful.",
       user: {
         id: user._id.toString(),
@@ -112,7 +126,14 @@ export const login = async (
         email: user.email,
         role: user.role,
       },
-    });
+    };
+
+    // Only expose the JWT in development
+    if (process.env.NODE_ENV === "development") {
+      response.token = token;
+    }
+
+    res.status(200).json(response);
   } catch (error) {
     console.error("Login error:", error);
 

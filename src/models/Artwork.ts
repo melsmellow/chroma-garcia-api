@@ -1,32 +1,18 @@
-import { Document, Model, Schema, Types, model, models } from "mongoose";
+import { Schema, model } from "mongoose";
 
-export type ArtworkStatus =
-  | "Available"
-  | "Reserved"
-  | "Sold"
-  | "Not for Sale";
+import type {
+  Artwork,
+  ArtworkStatus,
+} from "../types/artwork.type.js";
 
-export interface IArtwork extends Document {
-  slug: string;
-  title: string;
-  artist: Types.ObjectId;
-  imageUrl: string;
-  medium: string;
-  category: string;
-  tags: string[];
-  description: string;
-  year: number;
-  dimensions: string;
-  palette: string[];
-  status: ArtworkStatus;
-  price?: number;
-  currency?: string;
-  isFeatured: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+const artworkStatuses: ArtworkStatus[] = [
+  "Available",
+  "Reserved",
+  "Sold",
+  "Not for Sale",
+];
 
-const ArtworkSchema = new Schema<IArtwork>(
+const ArtworkSchema = new Schema<Artwork>(
   {
     slug: {
       type: String,
@@ -34,74 +20,97 @@ const ArtworkSchema = new Schema<IArtwork>(
       unique: true,
       index: true,
       trim: true,
+      lowercase: true,
     },
+
     title: {
       type: String,
       required: true,
       trim: true,
     },
+
     artist: {
       type: Schema.Types.ObjectId,
       ref: "Artist",
       required: true,
       index: true,
     },
+
     imageUrl: {
       type: String,
       required: true,
       trim: true,
     },
+
     medium: {
       type: String,
       required: true,
       trim: true,
     },
+
     category: {
       type: String,
       required: true,
       trim: true,
     },
+
     tags: {
       type: [String],
+      required: true,
       default: [],
     },
+
     description: {
       type: String,
       required: true,
       trim: true,
     },
+
     year: {
       type: Number,
       required: true,
     },
+
     dimensions: {
       type: String,
       required: true,
       trim: true,
     },
+
     palette: {
       type: [String],
+      required: true,
       default: [],
     },
+
     status: {
       type: String,
-      enum: ["Available", "Reserved", "Sold", "Not for Sale"],
+      required: true,
+      enum: artworkStatuses,
       default: "Available",
-      index: true,
     },
+
     price: {
       type: Number,
       min: 0,
     },
+
     currency: {
       type: String,
-      default: "PHP",
       trim: true,
+      uppercase: true,
+      default: "PHP",
     },
+
     isFeatured: {
       type: Boolean,
       default: false,
-      index: true,
+    },
+
+    likeCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {
@@ -109,7 +118,9 @@ const ArtworkSchema = new Schema<IArtwork>(
   }
 );
 
-const Artwork: Model<IArtwork> =
-  models.Artwork || model<IArtwork>("Artwork", ArtworkSchema);
+const ArtworkModel = model<Artwork>(
+  "Artwork",
+  ArtworkSchema
+);
 
-export default Artwork;
+export default ArtworkModel;

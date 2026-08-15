@@ -1,13 +1,31 @@
-import { Model, Schema, model, models } from "mongoose";
-import type { Artist } from "../types/artist.types.js";
+import { Schema, model } from "mongoose";
 
+import type {
+  Artist,
+  ArtistSocial,
+} from "../types/artist.types.js";
 
-export interface IArtist extends Artist {
-  createdAt: Date;
-  updatedAt: Date;
-}
+const ArtistSocialSchema = new Schema<ArtistSocial>(
+  {
+    instagram: {
+      type: String,
+      trim: true,
+    },
+    facebook: {
+      type: String,
+      trim: true,
+    },
+    website: {
+      type: String,
+      trim: true,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 
-const ArtistSchema = new Schema<IArtist>(
+const ArtistSchema = new Schema<Artist>(
   {
     slug: {
       type: String,
@@ -15,43 +33,57 @@ const ArtistSchema = new Schema<IArtist>(
       unique: true,
       index: true,
       trim: true,
+      lowercase: true,
     },
+
     name: {
       type: String,
       required: true,
       trim: true,
     },
+
     artStyle: {
       type: String,
       required: true,
       trim: true,
     },
+
     medium: {
       type: String,
       required: true,
       trim: true,
     },
+
     bio: {
       type: String,
       required: true,
+      trim: true,
     },
+
     palette: {
       type: [String],
+      required: true,
       default: [],
     },
+
     social: {
-      instagram: String,
-      facebook: String,
-      website: String,
+      type: ArtistSocialSchema,
+      required: false,
     },
-    portraitUrl: String,
+
+    portraitUrl: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Artist: Model<IArtist> =
-  models.Artist || model<IArtist>("Artist", ArtistSchema);
+const ArtistModel = model<Artist>(
+  "Artist",
+  ArtistSchema
+);
 
-export default Artist;
+export default ArtistModel;
