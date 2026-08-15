@@ -5,6 +5,9 @@ export interface IUser {
   email: string;
   passwordHash: string;
   role: UserRole;
+
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 
 export interface SignupInput {

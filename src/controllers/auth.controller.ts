@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import type { LoginInput, SignupInput } from "../types/user.types.js";
 import User from "../models/User.js";
 import { generateToken } from "../lib/jwt.js";
-
+import { sendPasswordResetEmail } from "../services/email.service.js";
 
 const COOKIE_NAME = "token";
 
@@ -20,7 +21,7 @@ const cookieOptions = {
 // POST /api/auth/signup
 export const signup = async (
   req: Request<{}, {}, SignupInput>,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { name, email, password, role } = req.body;
@@ -74,7 +75,7 @@ export const signup = async (
 // POST /api/auth/login
 export const login = async (
   req: Request<{}, {}, LoginInput>,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { email, password } = req.body;
@@ -91,10 +92,7 @@ export const login = async (
       return;
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      user.passwordHash
-    );
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
       res.status(401).json({
@@ -144,17 +142,11 @@ export const login = async (
 };
 
 // POST /api/auth/logout
-export const logout = async (
-  _req: Request,
-  res: Response
-): Promise<void> => {
+export const logout = async (_req: Request, res: Response): Promise<void> => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite:
-      process.env.NODE_ENV === "production"
-        ? "none"
-        : "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 
   res.status(200).json({
@@ -165,33 +157,77 @@ export const logout = async (
 // POST /api/auth/forgot-password
 export const forgotPassword = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    });
-
-    // Don't reveal whether an email exists
-    if (!user) {
-      res.status(200).json({
-        message:
-          "If an account exists with this email, password reset instructions will be sent.",
+    if (!email) {
+      res.status(400).json({
+        message: "Email is required.",
       });
 
       return;
     }
 
-    // TODO:
-    // 1. Generate reset token
-    // 2. Save hashed token + expiry to User
-    // 3. Send reset link via email
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+    }).select("+passwordResetToken +passwordResetExpires");
+
+    // Prevent email enumeration
+    if (!user) {
+      res.status(200).json({
+        message:
+          "If an account with that email exists, a password reset link has been sent.",
+      });
+
+      return;
+    }
+
+    // Generate raw token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Hash token before storing it
+    const hashedResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.passwordResetToken = hashedResetToken;
+
+    // 1 hour expiration
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await user.save();
+
+    const resetUrl =
+      `${process.env.FRONTEND_URL}` + `/reset-password?token=${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail({
+        email: user.email,
+        name: user.name,
+        resetUrl,
+      });
+    } catch (emailError) {
+      // Remove token if email failed
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+
+      await user.save();
+
+      console.error("Failed to send password reset email:", emailError);
+
+      res.status(500).json({
+        message: "Failed to send password reset email. Please try again.",
+      });
+
+      return;
+    }
 
     res.status(200).json({
       message:
-        "If an account exists with this email, password reset instructions will be sent.",
+        "If an account with that email exists, a password reset link has been sent.",
     });
   } catch (error) {
     console.error("Forgot password error:", error);
