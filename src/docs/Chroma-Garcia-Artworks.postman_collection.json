@@ -1,0 +1,240 @@
+{
+  "info": {
+    "_postman_id": "b6e5c0a0-artworks-collection",
+    "name": "Chroma Garcia API - Artworks",
+    "description": "Artwork API collection including public routes, admin CRUD routes, Cloudinary image upload, and likes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "artistId",
+      "value": ""
+    },
+    {
+      "key": "artistSlug",
+      "value": ""
+    },
+    {
+      "key": "artworkId",
+      "value": ""
+    },
+    {
+      "key": "artworkSlug",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Public Artwork Routes",
+      "item": [
+        {
+          "name": "Get All Artworks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/artworks"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Artwork By Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/artworks/{{artworkSlug}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Like Artwork",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/artworks/{{artworkSlug}}/like"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Artwork Routes",
+      "item": [
+        {
+          "name": "Create Artwork",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "slug",
+                  "value": "midnight-colors",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "Midnight Colors",
+                  "type": "text"
+                },
+                {
+                  "key": "artist",
+                  "value": "{{artistId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "medium",
+                  "value": "Acrylic on Canvas",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "Abstract",
+                  "type": "text"
+                },
+                {
+                  "key": "tags",
+                  "value": "[\"abstract\", \"contemporary\", \"color\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "An exploration of color, movement, and atmosphere inspired by the night.",
+                  "type": "text"
+                },
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "type": "text"
+                },
+                {
+                  "key": "dimensions",
+                  "value": "24 x 36 inches",
+                  "type": "text"
+                },
+                {
+                  "key": "palette",
+                  "value": "[\"#1E293B\", \"#FF5733\", \"#F8FAFC\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "Available",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "25000",
+                  "type": "text"
+                },
+                {
+                  "key": "currency",
+                  "value": "PHP",
+                  "type": "text"
+                },
+                {
+                  "key": "isFeatured",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/admin/artworks"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "if (response.artwork?._id) {",
+                  "  pm.collectionVariables.set('artworkId', response.artwork._id);",
+                  "  pm.collectionVariables.set('artworkSlug', response.artwork.slug);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Artwork",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Midnight Colors - Updated\",\n  \"status\": \"Reserved\",\n  \"price\": 28000,\n  \"isFeatured\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/admin/artworks/{{artworkId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Artwork",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/artworks/{{artworkId}}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

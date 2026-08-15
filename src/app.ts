@@ -8,6 +8,9 @@ import authRoutes from "./routes/auth.routes.js";
 // arist route
 import artistRoutes from "./routes/artist.route.js";
 import adminArtistRoutes from "./routes/admin/artist.admin.route.js";
+// artwork route
+import artworkRoutes from "./routes/artwork.routes.js";
+import adminArtworkRoutes from "./routes/admin/artwork.admin.routes.js";
 
 // Middlewares
 app.use(express.json());
@@ -25,6 +28,9 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/artists", artistRoutes);
 app.use("/api/admin/artists", adminArtistRoutes);
+
+app.use("/api/artworks", artworkRoutes);
+app.use("/api/admin/artworks", adminArtworkRoutes);
 
 
 

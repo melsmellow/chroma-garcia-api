@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
 
 import ArtistModel from "../models/Artist.js";
+import { uploadImage } from "../utils/uploadImage.js";
 
 // GET /api/artists
 export const getArtists = async (
   _req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const artists = await ArtistModel.find().sort({
@@ -27,7 +28,7 @@ export const getArtists = async (
 // GET /api/artists/:slug
 export const getArtistBySlug = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const artist = await ArtistModel.findOne({
@@ -57,8 +58,9 @@ export const getArtistBySlug = async (
 // POST /api/admin/artists
 export const createArtist = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
+  console.log(req);
   try {
     const {
       slug,
@@ -67,8 +69,9 @@ export const createArtist = async (
       medium,
       bio,
       palette,
-      social,
-      portraitUrl,
+      instagram,
+      facebook,
+      website,
     } = req.body;
 
     const existingArtist = await ArtistModel.findOne({
@@ -83,14 +86,38 @@ export const createArtist = async (
       return;
     }
 
+    let portraitUrl: string | undefined;
+
+    if (req.file) {
+      try {
+        const uploadResult = await uploadImage(req.file, {
+          folder: "chroma-garcia/artists",
+        });
+
+        portraitUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Cloudinary artist upload error:", error);
+
+        res.status(502).json({
+          message: "Failed to upload artist portrait.",
+        });
+
+        return;
+      }
+    }
+
     const artist = await ArtistModel.create({
       slug,
       name,
       artStyle,
       medium,
       bio,
-      palette,
-      social,
+      palette: JSON.parse(palette),
+      social: {
+        instagram,
+        facebook,
+        website,
+      },
       portraitUrl,
     });
 
@@ -106,23 +133,14 @@ export const createArtist = async (
     });
   }
 };
-
 // PATCH /api/admin/artists/:id
 export const updateArtist = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const {
-      slug,
-      name,
-      artStyle,
-      medium,
-      bio,
-      palette,
-      social,
-      portraitUrl,
-    } = req.body;
+    const { slug, name, artStyle, medium, bio, palette, social, portraitUrl } =
+      req.body;
 
     // If the slug is being changed, make sure it isn't already used
     if (slug) {
@@ -157,7 +175,7 @@ export const updateArtist = async (
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     if (!artist) {
@@ -184,12 +202,10 @@ export const updateArtist = async (
 // DELETE /api/admin/artists/:id
 export const deleteArtist = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const artist = await ArtistModel.findByIdAndDelete(
-      req.params.id
-    );
+    const artist = await ArtistModel.findByIdAndDelete(req.params.id);
 
     if (!artist) {
       res.status(404).json({

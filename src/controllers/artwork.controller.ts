@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import ArtistModel from "../models/Artist.js";
 import ArtworkModel from "../models/Artwork.js";
 import type { Artwork } from "../types/artwork.type.js";
+import { uploadImage } from "../utils/uploadImage.js";
 
 // GET /api/artworks
 export const getArtworks = async (
@@ -68,7 +69,6 @@ export const createArtwork = async (
       slug,
       title,
       artist,
-      imageUrl,
       medium,
       category,
       tags,
@@ -80,7 +80,15 @@ export const createArtwork = async (
       price,
       currency,
       isFeatured,
-    } = req.body as Artwork;
+    } = req.body;
+
+    if (!req.file) {
+      res.status(400).json({
+        message: "Artwork image is required.",
+      });
+
+      return;
+    }
 
     const artistExists = await ArtistModel.exists({
       _id: artist,
@@ -106,22 +114,51 @@ export const createArtwork = async (
       return;
     }
 
+    let imageUrl: string;
+
+    try {
+      const uploadResult = await uploadImage(req.file, {
+        folder: "chroma-garcia/artworks",
+      });
+
+      imageUrl = uploadResult.secure_url;
+    } catch (error) {
+      console.error("Cloudinary artwork upload error:", error);
+
+      res.status(502).json({
+        message: "Failed to upload artwork image.",
+      });
+
+      return;
+    }
+
     const artwork = await ArtworkModel.create({
       slug,
       title,
       artist,
+
       imageUrl,
+
       medium,
       category,
-      tags,
+
+      tags: JSON.parse(tags),
+
       description,
-      year,
+
+      year: Number(year),
       dimensions,
-      palette,
+
+      palette: JSON.parse(palette),
+
       status,
-      price,
+
+      price: price ? Number(price) : undefined,
+
       currency,
-      isFeatured,
+
+      isFeatured: isFeatured === "true",
+
       likeCount: 0,
     });
 
@@ -139,7 +176,6 @@ export const createArtwork = async (
     });
   }
 };
-
 // PATCH /api/admin/artworks/:id
 export const updateArtwork = async (
   req: Request,

@@ -34,17 +34,32 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/artists",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "artists"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artists"]
             }
           },
           "response": []
         },
+        {
+  "name": "Get Artworks By Artist Slug",
+  "request": {
+    "method": "GET",
+    "header": [],
+    "url": {
+      "raw": "{{baseUrl}}/api/artists/{{artistSlug}}/artworks",
+      "host": [
+        "{{baseUrl}}"
+      ],
+      "path": [
+        "api",
+        "artists",
+        "{{artistSlug}}",
+        "artworks"
+      ]
+    }
+  },
+  "response": []
+},
         {
           "name": "Get Artist by Slug",
           "request": {
@@ -52,14 +67,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/artists/{{artistSlug}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "artists",
-                "{{artistSlug}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artists", "{{artistSlug}}"]
             }
           },
           "response": []
@@ -83,26 +92,66 @@
               ]
             },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"slug\": \"juan-dela-cruz\",\n  \"name\": \"Juan Dela Cruz\",\n  \"artStyle\": \"Contemporary Abstract\",\n  \"medium\": \"Acrylic on Canvas\",\n  \"bio\": \"A contemporary artist exploring color, movement, and texture through abstract compositions.\",\n  \"palette\": [\n    \"#FF5733\",\n    \"#1E293B\",\n    \"#F8FAFC\"\n  ],\n  \"social\": {\n    \"instagram\": \"https://instagram.com/juandelacruz\",\n    \"facebook\": \"https://facebook.com/juandelacruz\",\n    \"website\": \"https://juandelacruz.com\"\n  },\n  \"portraitUrl\": \"https://example.com/juan-dela-cruz.jpg\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "slug",
+                  "value": "juan-dela-cruz",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "Juan Dela Cruz",
+                  "type": "text"
+                },
+                {
+                  "key": "artStyle",
+                  "value": "Contemporary Abstract",
+                  "type": "text"
+                },
+                {
+                  "key": "medium",
+                  "value": "Acrylic on Canvas",
+                  "type": "text"
+                },
+                {
+                  "key": "bio",
+                  "value": "A contemporary artist exploring color, movement, and texture through abstract compositions.",
+                  "type": "text"
+                },
+                {
+                  "key": "palette",
+                  "value": "[\"#FF5733\", \"#1E293B\", \"#F8FAFC\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "instagram",
+                  "value": "https://instagram.com/juandelacruz",
+                  "type": "text"
+                },
+                {
+                  "key": "facebook",
+                  "value": "https://facebook.com/juandelacruz",
+                  "type": "text"
+                },
+                {
+                  "key": "website",
+                  "value": "https://juandelacruz.com",
+                  "type": "text"
+                },
+                {
+                  "key": "portrait",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/artists",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "artists"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "artists"]
             }
           },
           "response": []
@@ -133,15 +182,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/artists/{{artistId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "artists",
-                "{{artistId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "artists", "{{artistId}}"]
             }
           },
           "response": []
@@ -163,15 +205,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/artists/{{artistId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "artists",
-                "{{artistId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "artists", "{{artistId}}"]
             }
           },
           "response": []
