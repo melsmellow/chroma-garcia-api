@@ -315,8 +315,7 @@ export const updateArtwork = async (
     }
 
     if (price !== undefined) {
-      updates.price =
-        price === "" ? undefined : Number(price);
+      updates.price = price === "" ? undefined : Number(price);
     }
 
     // ==============================
@@ -339,10 +338,7 @@ export const updateArtwork = async (
 
         updates.imageUrl = uploadResult.secure_url;
       } catch (error) {
-        console.error(
-          "Cloudinary artwork upload error:",
-          error,
-        );
+        console.error("Cloudinary artwork upload error:", error);
 
         res.status(502).json({
           message: "Failed to upload artwork image.",
@@ -384,8 +380,7 @@ export const updateArtwork = async (
 
       if (existingArtwork) {
         res.status(409).json({
-          message:
-            "An artwork with this slug already exists.",
+          message: "An artwork with this slug already exists.",
         });
 
         return;

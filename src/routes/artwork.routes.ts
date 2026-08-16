@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   getArtworkBySlug,
   getArtworks,
+  getArtworksByArtistSlug,
   likeArtwork,
 } from "../controllers/artwork.controller.js";
 
@@ -16,5 +17,9 @@ router.post("/:slug/like", likeArtwork);
 
 // GET /api/artworks/:slug
 router.get("/:slug", getArtworkBySlug);
+router.get(
+  "/artists/:slug/artworks",
+  getArtworksByArtistSlug,
+);
 
 export default router;
