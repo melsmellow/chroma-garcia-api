@@ -79,7 +79,6 @@ const ArtworkSchema = new Schema<Artwork>(
 
     palette: {
       type: [String],
-      required: true,
       default: [],
     },
 
