@@ -10,7 +10,7 @@ export interface Artist {
   artStyle: string;
   medium: string;
   bio: string;
-  palette: string[];
+  palette?: string[];
   social?: ArtistSocial;
   portraitUrl?: string;
 }

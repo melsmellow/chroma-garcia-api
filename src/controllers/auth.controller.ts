@@ -126,10 +126,9 @@ export const login = async (
       },
     };
 
-    // Only expose the JWT in development
-    if (process.env.NODE_ENV === "development") {
+
       response.token = token;
-    }
+    
 
     res.status(200).json(response);
   } catch (error) {

@@ -11,19 +11,53 @@ export const getArtists = async (
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
 
-    const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+
+    const search =
+      typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     const skip = (page - 1) * limit;
 
+    const filter = search
+      ? {
+          $or: [
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              slug: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              artStyle: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              medium: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
     const [artists, total] = await Promise.all([
-      ArtistModel.find()
+      ArtistModel.find(filter)
         .sort({
           name: 1,
         })
         .skip(skip)
         .limit(limit),
 
-      ArtistModel.countDocuments(),
+      ArtistModel.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -162,21 +196,63 @@ export const updateArtist = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { slug, name, artStyle, medium, bio, palette, social, portraitUrl } =
-      req.body;
+    const {
+      slug,
+      name,
+      artStyle,
+      medium,
+      bio,
+      palette,
+      instagram,
+      facebook,
+      website,
+    } = req.body;
 
-    // If the slug is being changed, make sure it isn't already used
-    if (slug) {
-      const existingArtist = await ArtistModel.findOne({
+    const existingArtist = await ArtistModel.findById(req.params.id);
+
+    if (!existingArtist) {
+      res.status(404).json({
+        message: "Artist not found.",
+      });
+
+      return;
+    }
+
+    // Check if another artist is already using this slug
+    if (slug && slug !== existingArtist.slug) {
+      const artistWithSameSlug = await ArtistModel.findOne({
         slug,
         _id: {
           $ne: req.params.id,
         },
       });
 
-      if (existingArtist) {
+      if (artistWithSameSlug) {
         res.status(409).json({
           message: "An artist with this slug already exists.",
+        });
+
+        return;
+      }
+    }
+
+    // Keep the existing image by default
+    let portraitUrl = existingArtist.portraitUrl;
+
+    // Only upload when a NEW file was sent
+    if (req.file) {
+      try {
+        console.log("Uploading new portrait image for artist...");
+        const uploadResult = await uploadImage(req.file, {
+          folder: "chroma-garcia/artists",
+        });
+
+        portraitUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Cloudinary artist upload error:", error);
+
+        res.status(502).json({
+          message: "Failed to upload artist portrait.",
         });
 
         return;
@@ -191,8 +267,12 @@ export const updateArtist = async (
         artStyle,
         medium,
         bio,
-        palette,
-        social,
+        palette: JSON.parse(palette),
+        social: {
+          instagram,
+          facebook,
+          website,
+        },
         portraitUrl,
       },
       {
@@ -200,14 +280,6 @@ export const updateArtist = async (
         runValidators: true,
       },
     );
-
-    if (!artist) {
-      res.status(404).json({
-        message: "Artist not found.",
-      });
-
-      return;
-    }
 
     res.status(200).json({
       message: "Artist updated successfully.",
