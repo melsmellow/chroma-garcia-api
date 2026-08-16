@@ -3,20 +3,19 @@ import "dotenv/config";
 import app from "./app.js";
 import { connectDatabase } from "./config/db.js";
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
 const startServer = async (): Promise<void> => {
   try {
-    // Connect to MongoDB first
     await connectDatabase();
 
-    // Only start the server if MongoDB is connected
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error(
-      "❌ Failed to start server because MongoDB connection failed."
+      "❌ Failed to start server because MongoDB connection failed.",
+      error,
     );
 
     process.exit(1);
