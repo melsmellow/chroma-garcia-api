@@ -7,16 +7,69 @@ import { uploadImage } from "../utils/uploadImage.js";
 
 // GET /api/artworks
 export const getArtworks = async (
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> => {
   try {
-    const artworks = await ArtworkModel.find().populate("artist").sort({
-      createdAt: -1,
-    });
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+
+    const search = String(req.query.search || "").trim();
+
+    const skip = (page - 1) * limit;
+
+    const filter = search
+      ? {
+          $or: [
+            {
+              title: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              category: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              medium: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        }
+      : {};
+
+    const [artworks, total] = await Promise.all([
+      ArtworkModel.find(filter)
+        .populate("artist")
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limit),
+
+      ArtworkModel.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
       artworks,
+
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Get artworks error:", error);
