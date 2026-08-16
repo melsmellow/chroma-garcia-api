@@ -228,6 +228,7 @@ export const createArtwork = async (
   }
 };
 // PATCH /api/admin/artworks/:id
+// PATCH /api/admin/artworks/:id
 export const updateArtwork = async (
   req: Request,
   res: Response,
@@ -235,31 +236,126 @@ export const updateArtwork = async (
   try {
     const updates: Partial<Artwork> = {};
 
-    const allowedFields: Array<keyof Artwork> = [
-      "slug",
-      "title",
-      "artist",
-      "imageUrl",
-      "medium",
-      "category",
-      "tags",
-      "description",
-      "year",
-      "dimensions",
-      "palette",
-      "status",
-      "price",
-      "currency",
-      "isFeatured",
-    ];
+    const {
+      slug,
+      title,
+      artist,
+      medium,
+      category,
+      tags,
+      description,
+      year,
+      dimensions,
+      palette,
+      status,
+      price,
+      currency,
+      isFeatured,
+    } = req.body;
 
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
+    // ==============================
+    // BASIC FIELDS
+    // ==============================
+
+    if (slug !== undefined) {
+      updates.slug = slug.trim().toLowerCase();
+    }
+
+    if (title !== undefined) {
+      updates.title = title.trim();
+    }
+
+    if (artist !== undefined) {
+      updates.artist = artist;
+    }
+
+    if (medium !== undefined) {
+      updates.medium = medium.trim();
+    }
+
+    if (category !== undefined) {
+      updates.category = category.trim();
+    }
+
+    if (description !== undefined) {
+      updates.description = description.trim();
+    }
+
+    if (dimensions !== undefined) {
+      updates.dimensions = dimensions.trim();
+    }
+
+    if (status !== undefined) {
+      updates.status = status;
+    }
+
+    if (currency !== undefined) {
+      updates.currency = currency.trim().toUpperCase();
+    }
+
+    // ==============================
+    // ARRAY FIELDS
+    // ==============================
+
+    if (tags !== undefined) {
+      updates.tags = JSON.parse(tags);
+    }
+
+    // Palette is optional
+    if (palette !== undefined) {
+      updates.palette = palette ? JSON.parse(palette) : [];
+    }
+
+    // ==============================
+    // NUMBER FIELDS
+    // ==============================
+
+    if (year !== undefined) {
+      updates.year = Number(year);
+    }
+
+    if (price !== undefined) {
+      updates.price =
+        price === "" ? undefined : Number(price);
+    }
+
+    // ==============================
+    // BOOLEAN FIELDS
+    // ==============================
+
+    if (isFeatured !== undefined) {
+      updates.isFeatured = isFeatured === "true";
+    }
+
+    // ==============================
+    // IMAGE UPLOAD
+    // ==============================
+
+    if (req.file) {
+      try {
+        const uploadResult = await uploadImage(req.file, {
+          folder: "chroma-garcia/artworks",
+        });
+
+        updates.imageUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error(
+          "Cloudinary artwork upload error:",
+          error,
+        );
+
+        res.status(502).json({
+          message: "Failed to upload artwork image.",
+        });
+
+        return;
       }
     }
 
-    // Validate artist if it is being changed
+    // ==============================
+    // VALIDATE ARTIST
+    // ==============================
+
     if (updates.artist) {
       const artistExists = await ArtistModel.exists({
         _id: updates.artist,
@@ -274,7 +370,10 @@ export const updateArtwork = async (
       }
     }
 
-    // Check for duplicate slug if slug is changing
+    // ==============================
+    // CHECK DUPLICATE SLUG
+    // ==============================
+
     if (updates.slug) {
       const existingArtwork = await ArtworkModel.findOne({
         slug: updates.slug,
@@ -285,12 +384,17 @@ export const updateArtwork = async (
 
       if (existingArtwork) {
         res.status(409).json({
-          message: "An artwork with this slug already exists.",
+          message:
+            "An artwork with this slug already exists.",
         });
 
         return;
       }
     }
+
+    // ==============================
+    // UPDATE ARTWORK
+    // ==============================
 
     const artwork = await ArtworkModel.findByIdAndUpdate(
       req.params.id,
