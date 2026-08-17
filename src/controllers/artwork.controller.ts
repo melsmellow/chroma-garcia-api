@@ -553,3 +553,33 @@ export const getArtworksByArtistSlug = async (
     });
   }
 };
+
+
+// GET /api/artworks/featured
+export const getFeaturedArtworks = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const artworks = await ArtworkModel.find({
+      isFeatured: true,
+    })
+      .populate({
+        path: "artist",
+        select: "_id name slug",
+      })
+      .sort({
+        createdAt: -1,
+      });
+
+    res.status(200).json({
+      artworks,
+    });
+  } catch (error) {
+    console.error("Get featured artworks error:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch featured artworks.",
+    });
+  }
+};

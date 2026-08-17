@@ -4,6 +4,7 @@ import {
   getArtworkBySlug,
   getArtworks,
   getArtworksByArtistSlug,
+  getFeaturedArtworks,
   likeArtwork,
 } from "../controllers/artwork.controller.js";
 
@@ -11,7 +12,7 @@ const router = Router();
 
 // GET /api/artworks
 router.get("/", getArtworks);
-
+router.get("/featured", getFeaturedArtworks);
 // POST /api/artworks/:slug/like
 router.post("/:slug/like", likeArtwork);
 
