@@ -88,7 +88,10 @@ export const getArtworkBySlug = async (
   try {
     const artwork = await ArtworkModel.findOne({
       slug: req.params.slug,
-    }).populate("artist");
+    }).populate({
+      path: "artist",
+      select: "_id name slug portraitUrl artStyle medium bio social",
+    });
 
     if (!artwork) {
       res.status(404).json({

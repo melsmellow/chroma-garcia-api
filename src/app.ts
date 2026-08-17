@@ -11,7 +11,7 @@ import adminArtistRoutes from "./routes/admin/artist.admin.route.js";
 // artwork route
 import artworkRoutes from "./routes/artwork.routes.js";
 import adminArtworkRoutes from "./routes/admin/artwork.admin.routes.js";
-
+import dashboardRoutes from "./routes/admin/dashboard.admin.routes.js";
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
@@ -31,6 +31,7 @@ app.use("/api/admin/artists", adminArtistRoutes);
 
 app.use("/api/artworks", artworkRoutes);
 app.use("/api/admin/artworks", adminArtworkRoutes);
+app.use("/api/admin/dashboard", dashboardRoutes);
 
 
 
