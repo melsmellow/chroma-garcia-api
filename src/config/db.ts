@@ -10,7 +10,6 @@ export const connectDatabase = async (): Promise<void> => {
   }
 
   try {
-    console.log(mongoUri);
     const connection = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
     });

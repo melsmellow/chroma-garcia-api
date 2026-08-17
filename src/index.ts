@@ -13,10 +13,7 @@ const startServer = async (): Promise<void> => {
   try {
     await connectDatabase();
   } catch (error) {
-    console.error(
-      "❌ Failed to connect to MongoDB.",
-      error,
-    );
+    console.error("❌ Failed to connect to MongoDB.", error);
 
     process.exit(1);
   }
