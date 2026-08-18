@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import ArtistModel from "../models/Artist.js";
+import ArtworkModel from "../models/Artwork.js";
 import { uploadImage } from "../utils/uploadImage.js";
 
 // GET /api/artists
@@ -310,8 +311,14 @@ export const deleteArtist = async (
       return;
     }
 
+    // Cascade delete all artworks belonging to this artist
+    const { deletedCount } = await ArtworkModel.deleteMany({
+      artist: artist._id,
+    });
+
     res.status(200).json({
       message: "Artist deleted successfully.",
+      deletedArtworks: deletedCount,
     });
   } catch (error) {
     console.error("Delete artist error:", error);
