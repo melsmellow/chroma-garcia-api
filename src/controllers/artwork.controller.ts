@@ -48,6 +48,7 @@ export const getArtworks = async (
       ArtworkModel.find(filter)
         .populate("artist")
         .sort({
+          isFeatured: -1,
           createdAt: -1,
         })
         .skip(skip)
@@ -522,6 +523,7 @@ export const getArtworksByArtistSlug = async (
       })
         .populate("artist")
         .sort({
+          isFeatured: -1,
           createdAt: -1,
         })
         .skip(skip)
